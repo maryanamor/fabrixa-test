@@ -61,14 +61,11 @@
   </div>
 </div>
 
-{{ 'fabrixa-widget.css' | asset_url | stylesheet_tag }}
-<script src="{{ 'fabrixa-widget.js' | asset_url }}" defer></script>
-
 {% schema %}
 {
   "name": "Product Customizer",
   "target": "section",
-  "javascript": "fabrixa-widget.js",
+  "javascript": "customizer-trigger.js",
   "stylesheet": "fabrixa-widget.css",
   "settings": [
     {

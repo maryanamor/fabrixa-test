@@ -46,6 +46,18 @@
     return getOrCreateCartItemKey(variantId);
   }
 
+  function injectCartKey(key) {
+    var form = document.querySelector('form[action="/cart/add"]');
+    if (!form) return;
+    var existing = form.querySelector('[name="properties[_fabrixa_cart_item_key]"]');
+    if (existing) { existing.value = key; return; }
+    var input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'properties[_fabrixa_cart_item_key]';
+    input.value = key;
+    form.appendChild(input);
+  }
+
   /* ── DOM refs ── */
   var wrapper       = document.getElementById('fabrixa-widget-wrapper');
   if (!wrapper) return; // snippet not present on this page
@@ -94,7 +106,7 @@
     }
 
     // 3. Fallback: look for data attributes on the selected <option>
-    if (variantSelect) {
+    if (variantSelect && variantSelect.tagName === 'SELECT') {
       var selectedOpt = variantSelect.options[variantSelect.selectedIndex];
       if (selectedOpt) {
         var pid = selectedOpt.dataset.fabrixaProductId;
@@ -103,7 +115,14 @@
       }
     }
 
-    // 4. Global fallback (set in theme liquid via window.fabrixaProductId etc.)
+    // 4. Block settings fallback (data-product-id / data-variant-id set in theme editor)
+    var wPid = wrapper.dataset.productId;
+    var wVid = wrapper.dataset.variantId;
+    if (wPid && wVid) {
+      return { productId: wPid, variantId: wVid, shopifyVariantId: shopifyVariantId };
+    }
+
+    // 5. Global fallback (set in theme liquid via window.fabrixaProductId etc.)
     if (window.fabrixaProductId && window.fabrixaVariantId) {
       return {
         productId: window.fabrixaProductId,
@@ -158,6 +177,7 @@
   /* ── Update hidden input for cart ── */
   function setCartKey(key) {
     cartKeyInput.value = key;
+    injectCartKey(key);
   }
 
   /* ── iframe loaded — hide spinner ── */
