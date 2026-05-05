@@ -1,0 +1,238 @@
+/* ─────────────────────────────────────────────
+   Fabrixa Design Widget — Shopify Theme Styles
+   ───────────────────────────────────────────── */
+
+/* ---------- Variables ---------- */
+:root {
+  --fabrixa-accent:        #ff6b35;
+  --fabrixa-accent-hover:  #e55a28;
+  --fabrixa-text:          #111111;
+  --fabrixa-text-light:    #555555;
+  --fabrixa-border:        #e2e2e2;
+  --fabrixa-bg:            #ffffff;
+  --fabrixa-shadow:        0 4px 24px rgba(0, 0, 0, 0.14);
+  --fabrixa-radius:        8px;
+  --fabrixa-modal-z:       10000;
+}
+
+/* ---------- Wrapper ---------- */
+.fabrixa-widget-wrapper {
+  margin: 16px 0;
+}
+
+/* ---------- Customize Button ---------- */
+.fabrixa-customize-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 22px;
+  background: var(--fabrixa-accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: none;
+  border-radius: var(--fabrixa-radius);
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.30);
+  font-family: inherit;
+  width: 100%;
+  justify-content: center;
+}
+
+.fabrixa-customize-btn:hover {
+  background: var(--fabrixa-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(255, 107, 53, 0.38);
+}
+
+.fabrixa-customize-btn:active {
+  transform: translateY(0);
+}
+
+.fabrixa-customize-btn svg {
+  flex-shrink: 0;
+}
+
+/* ---------- Preview Container ---------- */
+.fabrixa-preview-container {
+  margin-top: 14px;
+  border: 1px solid var(--fabrixa-border);
+  border-radius: var(--fabrixa-radius);
+  overflow: hidden;
+  background: #f9f9f9;
+}
+
+.fabrixa-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--fabrixa-bg);
+  border-bottom: 1px solid var(--fabrixa-border);
+}
+
+.fabrixa-preview-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fabrixa-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.fabrixa-re-edit-btn {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fabrixa-accent);
+  background: transparent;
+  border: 1px solid var(--fabrixa-accent);
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
+}
+
+.fabrixa-re-edit-btn:hover {
+  background: var(--fabrixa-accent);
+  color: #fff;
+}
+
+.fabrixa-preview-img {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* ---------- Modal Overlay ---------- */
+.fabrixa-modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--fabrixa-modal-z);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  animation: fabrixa-fade-in 0.2s ease;
+}
+
+@keyframes fabrixa-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.fabrixa-modal-inner {
+  position: relative;
+  width: 100%;
+  max-width: 1100px;
+  height: 90vh;
+  background: var(--fabrixa-bg);
+  border-radius: 12px;
+  box-shadow: var(--fabrixa-shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: fabrixa-slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fabrixa-slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ---------- Close Button ---------- */
+.fabrixa-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--fabrixa-border);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--fabrixa-text);
+  transition: background 0.15s, transform 0.12s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  font-family: inherit;
+}
+
+.fabrixa-modal-close:hover {
+  background: #f0f0f0;
+  transform: scale(1.08);
+}
+
+/* ---------- Loading State ---------- */
+.fabrixa-modal-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--fabrixa-text-light);
+  font-size: 14px;
+  background: var(--fabrixa-bg);
+  z-index: 5;
+  transition: opacity 0.2s;
+}
+
+.fabrixa-modal-loading.fabrixa-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fabrixa-spinner {
+  width: 38px;
+  height: 38px;
+  border: 3px solid var(--fabrixa-border);
+  border-top-color: var(--fabrixa-accent);
+  border-radius: 50%;
+  animation: fabrixa-spin 0.7s linear infinite;
+}
+
+@keyframes fabrixa-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- iFrame ---------- */
+.fabrixa-iframe {
+  width: 100%;
+  flex: 1;
+  border: none;
+  display: block;
+}
+
+/* ---------- Body lock when modal is open ---------- */
+body.fabrixa-modal-open {
+  overflow: hidden;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 600px) {
+  .fabrixa-modal {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .fabrixa-modal-inner {
+    border-radius: 16px 16px 0 0;
+    height: 95vh;
+    max-width: 100%;
+  }
+}

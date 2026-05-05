@@ -1,0 +1,10 @@
+api_version = "2026-07"
+uid = "1cd0ee6c-cf67-1a8e-b186-644e4c8b7e158f7982b9"
+
+[[extensions]]
+type = "theme"
+name = "Product Customizer"
+handle = "product-customizer"
+
+  [[extensions.targeting]]
+  target = "section/main-product/blocks/customizer-trigger"

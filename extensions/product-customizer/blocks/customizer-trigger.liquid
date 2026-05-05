@@ -1,0 +1,106 @@
+<div
+  id="fabrixa-widget-wrapper"
+  class="fabrixa-widget-wrapper"
+  data-application-key="{{ block.settings.application_key }}"
+  data-widget-base-url="{{ block.settings.widget_base_url }}"
+  data-api-preview-base="https://api.fabrixa.com/v2/shop/integration/product-customizations"
+  data-product-id="{{ block.settings.fabrixa_product_id }}"
+  data-variant-id="{{ block.settings.fabrixa_variant_id }}"
+  {{ block.shopify_attributes }}
+>
+
+  <button
+    type="button"
+    class="fabrixa-customize-btn"
+    id="fabrixa-open-btn"
+    aria-label="Open design customizer"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 20h9"/>
+      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+    </svg>
+    {{ block.settings.button_label }}
+  </button>
+
+  <div id="fabrixa-preview-container" class="fabrixa-preview-container" style="display:none;" aria-live="polite">
+    <div class="fabrixa-preview-header">
+      <span class="fabrixa-preview-label">Your customization</span>
+      <button type="button" class="fabrixa-re-edit-btn" id="fabrixa-re-edit-btn">Edit again</button>
+    </div>
+    <img
+      id="fabrixa-preview-img"
+      class="fabrixa-preview-img"
+      src=""
+      alt="Customized product preview"
+      loading="lazy"
+    />
+  </div>
+
+  <input type="hidden" name="properties[_fabrixa_cart_item_key]" id="fabrixa-cart-item-key-input" value="" />
+
+</div>
+
+<div id="fabrixa-modal" class="fabrixa-modal" role="dialog" aria-modal="true" aria-label="Product customizer" style="display:none;">
+  <div class="fabrixa-modal-inner">
+    <button type="button" class="fabrixa-modal-close" id="fabrixa-modal-close" aria-label="Close customizer">&times;</button>
+    <div class="fabrixa-modal-loading" id="fabrixa-modal-loading">
+      <div class="fabrixa-spinner"></div>
+      <span>Loading customizer…</span>
+    </div>
+    <iframe
+      id="fabrixa-iframe"
+      name="FabrixaDesignWidget"
+      class="fabrixa-iframe"
+      src=""
+      scrolling="no"
+      frameborder="0"
+      allowfullscreen
+      title="Fabrixa Design Widget"
+    ></iframe>
+  </div>
+</div>
+
+{{ 'fabrixa-widget.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'fabrixa-widget.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Product Customizer",
+  "target": "section",
+  "javascript": "fabrixa-widget.js",
+  "stylesheet": "fabrixa-widget.css",
+  "settings": [
+    {
+      "type": "text",
+      "id": "application_key",
+      "label": "Fabrixa Application Key",
+      "default": "788d6018-a36c-47e9-9ce3-b1f7e4bf4898"
+    },
+    {
+      "type": "text",
+      "id": "widget_base_url",
+      "label": "Widget Base URL",
+      "default": "https://dev-widget.fabrixa.com"
+    },
+    {
+      "type": "text",
+      "id": "fabrixa_product_id",
+      "label": "Fabrixa Product ID",
+      "info": "The product ID from your Fabrixa account"
+    },
+    {
+      "type": "text",
+      "id": "fabrixa_variant_id",
+      "label": "Fabrixa Variant ID",
+      "info": "The variant ID from your Fabrixa account"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button Label",
+      "default": "Customize this product"
+    }
+  ]
+}
+{% endschema %}
