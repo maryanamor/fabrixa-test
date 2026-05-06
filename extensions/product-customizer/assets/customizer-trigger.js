@@ -174,6 +174,33 @@
     openBtn.style.display = 'none';
   }
 
+  /* ── Add customized product to cart via Shopify Cart API ── */
+  function getQuantity() {
+    var input = document.querySelector('[name="quantity"]');
+    var q = input ? parseInt(input.value, 10) : 1;
+    return q > 0 ? q : 1;
+  }
+
+  function addToCart(shopifyVariantId, cartItemKey, onSuccess, onError) {
+    fetch('/cart/add.js', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: [{
+          id: parseInt(shopifyVariantId, 10),
+          quantity: getQuantity(),
+          properties: { _fabrixa_cart_item_key: cartItemKey }
+        }]
+      })
+    })
+    .then(function (res) {
+      if (!res.ok) return res.json().then(function (body) { throw new Error(body.description || res.status); });
+      return res.json();
+    })
+    .then(onSuccess)
+    .catch(onError);
+  }
+
   /* ── Update hidden input for cart ── */
   function setCartKey(key) {
     cartKeyInput.value = key;
@@ -229,7 +256,6 @@
       console.log('[Fabrixa] Customization saved.');
       closeModal();
 
-      // Retrieve the cart item key that was active when the widget was opened
       var ids = getFabrixaIds();
       var cartItemKey = cartKeyInput.value || getOrCreateCartItemKey(
         ids ? (ids.shopifyVariantId || 'default') : 'default'
@@ -237,10 +263,28 @@
 
       showPreview(cartItemKey);
 
-      // Fire a custom event so themes/apps can hook in
-      document.dispatchEvent(new CustomEvent('fabrixa:customizationFinished', {
-        detail: { cartItemKey: cartItemKey }
-      }));
+      if (ids && ids.shopifyVariantId) {
+        addToCart(ids.shopifyVariantId, cartItemKey, function (cartData) {
+          console.log('[Fabrixa] Added to cart.');
+          // Notify theme to refresh cart count / drawer (works with Dawn and most themes)
+          document.dispatchEvent(new CustomEvent('cart:refresh'));
+          document.dispatchEvent(new CustomEvent('fabrixa:addedToCart', {
+            detail: { cartItemKey: cartItemKey, cart: cartData }
+          }));
+          document.dispatchEvent(new CustomEvent('fabrixa:customizationFinished', {
+            detail: { cartItemKey: cartItemKey }
+          }));
+        }, function (err) {
+          console.error('[Fabrixa] Add to cart failed:', err.message);
+          document.dispatchEvent(new CustomEvent('fabrixa:customizationFinished', {
+            detail: { cartItemKey: cartItemKey, cartError: err.message }
+          }));
+        });
+      } else {
+        document.dispatchEvent(new CustomEvent('fabrixa:customizationFinished', {
+          detail: { cartItemKey: cartItemKey }
+        }));
+      }
     }
 
     if (event.data === 'closeButtonClicked') {
