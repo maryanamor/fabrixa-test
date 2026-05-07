@@ -176,10 +176,8 @@
           id: parseInt(shopifyVariantId, 10),
           quantity: getQuantity(),
           properties: { _fabrixa_cart_item_key: cartItemKey }
-        }],
-        // Ask Shopify to return re-rendered section HTML in the same response
-        sections: ['cart-icon-bubble', 'cart-notification-button'],
-        sections_url: window.location.pathname
+
+        }]
       })
     })
     .then(function (res) {
@@ -190,48 +188,45 @@
     .catch(onError);
   }
 
-  /* ── Extract inner HTML from a Shopify section response string ── */
-  function getSectionInnerHTML(html, selector) {
-    return new DOMParser()
-      .parseFromString(html, 'text/html')
-      .querySelector(selector || '.shopify-section')
-      .innerHTML;
-  }
-
-  /* ── Refresh cart UI using sections returned by /cart/add.js ──
-     Dawn uses id="cart-icon-bubble" (not "shopify-section-cart-icon-bubble").
-     The bubble element may not exist at all when the page loaded with an empty cart,
-     so we inject it when needed.
+  /* ── Refresh cart UI ──
+     Fetches fresh section HTML after the cart add so the rendered output
+     is guaranteed to include the newly added item. Uses innerHTML on the
+     section wrapper (not outerHTML) so the wrapper element stays in place
+     while the cart-drawer custom element inside it is replaced and
+     re-instantiated by the browser.
   ── */
-  function refreshCartUI(sections) {
-    // Update cart-icon-bubble (Dawn and themes that have this section)
-    if (sections && sections['cart-icon-bubble']) {
-      var bubbleEl = document.getElementById('cart-icon-bubble');
-      if (bubbleEl) {
-        bubbleEl.innerHTML = getSectionInnerHTML(sections['cart-icon-bubble']);
-      } else {
-        // Bubble element absent (page loaded with empty cart) — find its anchor and inject
-        var cartLink = document.querySelector('a[href="/cart"], a[href*="/cart"]');
-        if (cartLink) {
-          var tmp = document.createElement('div');
-          tmp.innerHTML = getSectionInnerHTML(sections['cart-icon-bubble']);
-          var newBubble = tmp.querySelector('.cart-count-bubble');
-          if (newBubble) cartLink.appendChild(newBubble);
+  function refreshCartUI() {
+    fetch('/?sections=cart-drawer,cart-icon-bubble&_t=' + Date.now())
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var parser = new DOMParser();
+
+        // cart-icon-bubble: Dawn renders this with id="cart-icon-bubble"
+        if (data['cart-icon-bubble']) {
+          var bubbleEl = document.getElementById('cart-icon-bubble');
+          if (bubbleEl) {
+            var inner = parser.parseFromString(data['cart-icon-bubble'], 'text/html')
+                              .querySelector('.shopify-section');
+            if (inner) bubbleEl.innerHTML = inner.innerHTML;
+          }
         }
-      }
-    }
 
-    // Update cart-notification-button if present
-    if (sections && sections['cart-notification-button']) {
-      var notifEl = document.getElementById('cart-notification-button');
-      if (notifEl) {
-        notifEl.innerHTML = getSectionInnerHTML(sections['cart-notification-button'], '.cart-notification__links');
-      }
-    }
+        // cart-drawer: update only innerHTML of #CartDrawer (Dawn's selector).
+        // Never touch className — changing it triggers the overlay without the
+        // open animation and breaks the drawer's internal state.
+        if (data['cart-drawer']) {
+          var drawerEl = document.querySelector('#CartDrawer');
+          if (drawerEl) {
+            var newDrawer = parser.parseFromString(data['cart-drawer'], 'text/html')
+                                  .querySelector('#CartDrawer');
+            if (newDrawer) drawerEl.innerHTML = newDrawer.innerHTML;
+          }
+        }
 
-    // Events for themes that listen for cart updates
-    document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
-    document.dispatchEvent(new CustomEvent('cart:updated', { bubbles: true }));
+        document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
+        document.dispatchEvent(new CustomEvent('cart:updated', { bubbles: true }));
+      })
+      .catch(function () {});
   }
 
   /* ── Update hidden input for cart ── */
@@ -299,7 +294,7 @@
       if (ids && ids.shopifyVariantId) {
         addToCart(ids.shopifyVariantId, cartItemKey, function (cartData) {
           console.log('[Fabrixa] Added to cart.');
-          refreshCartUI(cartData.sections);
+          refreshCartUI();
           document.dispatchEvent(new CustomEvent('fabrixa:addedToCart', {
             detail: { cartItemKey: cartItemKey, cart: cartData }
           }));
