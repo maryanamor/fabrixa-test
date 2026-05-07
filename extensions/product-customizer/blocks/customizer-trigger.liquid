@@ -4,8 +4,7 @@
   data-application-key="{{ block.settings.application_key }}"
   data-widget-base-url="{{ block.settings.widget_base_url }}"
   data-api-preview-base="https://api.fabrixa.com/v2/shop/integration/product-customizations"
-  data-product-id="{{ block.settings.fabrixa_product_id }}"
-  data-variant-id="{{ block.settings.fabrixa_variant_id }}"
+  data-sku="{{ block.settings.sku }}"
   {{ block.shopify_attributes }}
 >
 
@@ -82,15 +81,9 @@
     },
     {
       "type": "text",
-      "id": "fabrixa_product_id",
-      "label": "Fabrixa Product ID",
-      "info": "The product ID from your Fabrixa account"
-    },
-    {
-      "type": "text",
-      "id": "fabrixa_variant_id",
-      "label": "Fabrixa Variant ID",
-      "info": "The variant ID from your Fabrixa account"
+      "id": "sku",
+      "label": "Fabrixa sku",
+      "info": "The SKU from your Fabrixa account"
     },
     {
       "type": "text",

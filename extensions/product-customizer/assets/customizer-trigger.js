@@ -78,57 +78,44 @@
   var previewBase   = wrapper.dataset.apiPreviewBase   || 'https://api.fabrixa.com/v2/shop/integration/product-customizations';
   var trustedOrigin = new URL(widgetBaseUrl).origin;
 
-  /* ── Resolve Fabrixa product/variant IDs ──
+  /* ── Resolve Fabrixa SKU ──
      Priority order:
-       1. data-fabrixa-product-id / data-fabrixa-variant-id on the currently
-          selected variant <option> (set via section schema or theme code)
-       2. Metafield variant map (JSON stored in wrapper data-variant-map)
-       3. Fallback to global window vars if set by theme
+       1. Metafield variant map (JSON stored in wrapper data-variant-map)
+       2. data-fabrixa-sku on the currently selected variant <option>
+       3. Block settings (data-sku on wrapper, set in theme editor)
+       4. Global window.fabrixaSku if set by theme liquid
   ── */
   function getFabrixaIds() {
-    // 1. Try currently selected Shopify variant
     var variantSelect = document.querySelector('[name="id"]');
     var shopifyVariantId = variantSelect ? variantSelect.value : null;
 
-    // 2. Try variant map (JSON metafield: {"shopify_variant_id": {"product_id": X, "variant_id": Y}})
+    // 1. Variant map (JSON metafield: {"shopify_variant_id": {"sku": "..."}})
     var mapRaw = wrapper.dataset.variantMap;
     if (mapRaw && shopifyVariantId) {
       try {
         var map = JSON.parse(mapRaw);
-        if (map[shopifyVariantId]) {
-          return {
-            productId:  map[shopifyVariantId].product_id,
-            variantId:  map[shopifyVariantId].variant_id,
-            shopifyVariantId: shopifyVariantId
-          };
+        if (map[shopifyVariantId] && map[shopifyVariantId].sku) {
+          return { sku: map[shopifyVariantId].sku, shopifyVariantId: shopifyVariantId };
         }
       } catch (_) {}
     }
 
-    // 3. Fallback: look for data attributes on the selected <option>
+    // 2. data-fabrixa-sku on the selected <option>
     if (variantSelect && variantSelect.tagName === 'SELECT') {
       var selectedOpt = variantSelect.options[variantSelect.selectedIndex];
-      if (selectedOpt) {
-        var pid = selectedOpt.dataset.fabrixaProductId;
-        var vid = selectedOpt.dataset.fabrixaVariantId;
-        if (pid && vid) return { productId: pid, variantId: vid, shopifyVariantId: shopifyVariantId };
+      if (selectedOpt && selectedOpt.dataset.fabrixaSku) {
+        return { sku: selectedOpt.dataset.fabrixaSku, shopifyVariantId: shopifyVariantId };
       }
     }
 
-    // 4. Block settings fallback (data-product-id / data-variant-id set in theme editor)
-    var wPid = wrapper.dataset.productId;
-    var wVid = wrapper.dataset.variantId;
-    if (wPid && wVid) {
-      return { productId: wPid, variantId: wVid, shopifyVariantId: shopifyVariantId };
+    // 3. Block settings (data-sku set in theme editor)
+    if (wrapper.dataset.sku) {
+      return { sku: wrapper.dataset.sku, shopifyVariantId: shopifyVariantId };
     }
 
-    // 5. Global fallback (set in theme liquid via window.fabrixaProductId etc.)
-    if (window.fabrixaProductId && window.fabrixaVariantId) {
-      return {
-        productId: window.fabrixaProductId,
-        variantId: window.fabrixaVariantId,
-        shopifyVariantId: shopifyVariantId
-      };
+    // 4. Global fallback (set in theme liquid via window.fabrixaSku)
+    if (window.fabrixaSku) {
+      return { sku: window.fabrixaSku, shopifyVariantId: shopifyVariantId };
     }
 
     return null;
@@ -137,10 +124,9 @@
   /* ── Build widget URL ── */
   function buildWidgetUrl(ids, cartItemKey) {
     var url = new URL(widgetBaseUrl);
-    url.searchParams.set('application_key',       appKey);
-    url.searchParams.set('product_id',            ids.productId);
-    url.searchParams.set('product_variant_id',    ids.variantId);
-    url.searchParams.set('cart_item_key',         cartItemKey);
+    url.searchParams.set('application_key', appKey);
+    url.searchParams.set('sku',             ids.sku);
+    url.searchParams.set('cart_item_key',   cartItemKey);
     return url.toString();
   }
 
@@ -190,7 +176,10 @@
           id: parseInt(shopifyVariantId, 10),
           quantity: getQuantity(),
           properties: { _fabrixa_cart_item_key: cartItemKey }
-        }]
+        }],
+        // Ask Shopify to return re-rendered section HTML in the same response
+        sections: ['cart-icon-bubble', 'cart-notification-button'],
+        sections_url: window.location.pathname
       })
     })
     .then(function (res) {
@@ -199,6 +188,50 @@
     })
     .then(onSuccess)
     .catch(onError);
+  }
+
+  /* ── Extract inner HTML from a Shopify section response string ── */
+  function getSectionInnerHTML(html, selector) {
+    return new DOMParser()
+      .parseFromString(html, 'text/html')
+      .querySelector(selector || '.shopify-section')
+      .innerHTML;
+  }
+
+  /* ── Refresh cart UI using sections returned by /cart/add.js ──
+     Dawn uses id="cart-icon-bubble" (not "shopify-section-cart-icon-bubble").
+     The bubble element may not exist at all when the page loaded with an empty cart,
+     so we inject it when needed.
+  ── */
+  function refreshCartUI(sections) {
+    // Update cart-icon-bubble (Dawn and themes that have this section)
+    if (sections && sections['cart-icon-bubble']) {
+      var bubbleEl = document.getElementById('cart-icon-bubble');
+      if (bubbleEl) {
+        bubbleEl.innerHTML = getSectionInnerHTML(sections['cart-icon-bubble']);
+      } else {
+        // Bubble element absent (page loaded with empty cart) — find its anchor and inject
+        var cartLink = document.querySelector('a[href="/cart"], a[href*="/cart"]');
+        if (cartLink) {
+          var tmp = document.createElement('div');
+          tmp.innerHTML = getSectionInnerHTML(sections['cart-icon-bubble']);
+          var newBubble = tmp.querySelector('.cart-count-bubble');
+          if (newBubble) cartLink.appendChild(newBubble);
+        }
+      }
+    }
+
+    // Update cart-notification-button if present
+    if (sections && sections['cart-notification-button']) {
+      var notifEl = document.getElementById('cart-notification-button');
+      if (notifEl) {
+        notifEl.innerHTML = getSectionInnerHTML(sections['cart-notification-button'], '.cart-notification__links');
+      }
+    }
+
+    // Events for themes that listen for cart updates
+    document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
+    document.dispatchEvent(new CustomEvent('cart:updated', { bubbles: true }));
   }
 
   /* ── Update hidden input for cart ── */
@@ -218,7 +251,7 @@
   openBtn.addEventListener('click', function () {
     var ids = getFabrixaIds();
     if (!ids) {
-      console.warn('[Fabrixa] Could not resolve product/variant IDs. Check your variant map configuration.');
+      console.warn('[Fabrixa] Could not resolve SKU. Check your block settings or variant map configuration.');
       alert('Customizer is not configured for this product yet.');
       return;
     }
@@ -266,8 +299,7 @@
       if (ids && ids.shopifyVariantId) {
         addToCart(ids.shopifyVariantId, cartItemKey, function (cartData) {
           console.log('[Fabrixa] Added to cart.');
-          // Notify theme to refresh cart count / drawer (works with Dawn and most themes)
-          document.dispatchEvent(new CustomEvent('cart:refresh'));
+          refreshCartUI(cartData.sections);
           document.dispatchEvent(new CustomEvent('fabrixa:addedToCart', {
             detail: { cartItemKey: cartItemKey, cart: cartData }
           }));
