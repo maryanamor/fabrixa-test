@@ -1,7 +1,8 @@
 {% if product %}
+{% assign fabrixa_sku = product.metafields.app.fabrixa_sku.value | default: product.selected_or_first_available_variant.sku | default: '' %}
 <script>
   window.__fabrixa = {
-    sku: {{ product.metafields.app.fabrixa_sku.value | default: '' | json }},
+    sku: {{ fabrixa_sku | json }},
     appKey: {{ block.settings.application_key | json }},
     widgetBaseUrl: {{ block.settings.widget_base_url | json }},
     buttonLabel: {{ block.settings.button_label | json }}

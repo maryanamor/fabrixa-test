@@ -1,6 +1,7 @@
 (function () {
   'use strict';
 
+  function init() {
   var cfg = window.__fabrixa;
   if (!cfg || !cfg.sku) return;
 
@@ -192,4 +193,11 @@
       document.dispatchEvent(new CustomEvent('fabrixa:widgetClosed'));
     }
   });
+  } // end init
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
