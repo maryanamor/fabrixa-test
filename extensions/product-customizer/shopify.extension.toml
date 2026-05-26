@@ -7,4 +7,4 @@ name = "Product Customizer"
 handle = "product-customizer"
 
   [[extensions.targeting]]
-  target = "section/main-product/blocks/customizer-trigger"
+  target = "body"

@@ -1,0 +1,11 @@
+api_version = "2026-07"
+
+[[extensions]]
+type = "ui_extension"
+name = "Fabrixa Product Block"
+handle = "fabrixa-product-block"
+uid = "e315c9bd-5332-e105-0a17-27228bf4733c68da258f"
+
+  [[extensions.targeting]]
+  target = "admin.product-details.block.render"
+  module = "./src/index.jsx"

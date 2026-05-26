@@ -78,47 +78,12 @@
   var previewBase   = wrapper.dataset.apiPreviewBase   || 'https://api.fabrixa.com/v2/shop/integration/product-customizations';
   var trustedOrigin = new URL(widgetBaseUrl).origin;
 
-  /* ── Resolve Fabrixa SKU ──
-     Priority order:
-       1. Metafield variant map (JSON stored in wrapper data-variant-map)
-       2. data-fabrixa-sku on the currently selected variant <option>
-       3. Block settings (data-sku on wrapper, set in theme editor)
-       4. Global window.fabrixaSku if set by theme liquid
-  ── */
+  /* ── Resolve Fabrixa SKU from product metafield (set via Admin Block) ── */
   function getFabrixaIds() {
     var variantSelect = document.querySelector('[name="id"]');
     var shopifyVariantId = variantSelect ? variantSelect.value : null;
-
-    // 1. Variant map (JSON metafield: {"shopify_variant_id": {"sku": "..."}})
-    var mapRaw = wrapper.dataset.variantMap;
-    if (mapRaw && shopifyVariantId) {
-      try {
-        var map = JSON.parse(mapRaw);
-        if (map[shopifyVariantId] && map[shopifyVariantId].sku) {
-          return { sku: map[shopifyVariantId].sku, shopifyVariantId: shopifyVariantId };
-        }
-      } catch (_) {}
-    }
-
-    // 2. data-fabrixa-sku on the selected <option>
-    if (variantSelect && variantSelect.tagName === 'SELECT') {
-      var selectedOpt = variantSelect.options[variantSelect.selectedIndex];
-      if (selectedOpt && selectedOpt.dataset.fabrixaSku) {
-        return { sku: selectedOpt.dataset.fabrixaSku, shopifyVariantId: shopifyVariantId };
-      }
-    }
-
-    // 3. Block settings (data-sku set in theme editor)
-    if (wrapper.dataset.sku) {
-      return { sku: wrapper.dataset.sku, shopifyVariantId: shopifyVariantId };
-    }
-
-    // 4. Global fallback (set in theme liquid via window.fabrixaSku)
-    if (window.fabrixaSku) {
-      return { sku: window.fabrixaSku, shopifyVariantId: shopifyVariantId };
-    }
-
-    return null;
+    var sku = wrapper.dataset.sku || null;
+    return sku ? { sku: sku, shopifyVariantId: shopifyVariantId } : null;
   }
 
   /* ── Build widget URL ── */

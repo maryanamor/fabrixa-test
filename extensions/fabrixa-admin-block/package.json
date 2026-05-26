@@ -1,0 +1,10 @@
+{
+  "name": "fabrixa-admin-block",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@preact/signals": "^1.3.0",
+    "@shopify/ui-extensions": "^2026.1.1",
+    "preact": "^10.25.3"
+  }
+}
